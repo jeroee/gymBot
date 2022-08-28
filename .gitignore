@@ -2,4 +2,3 @@ test.ipynb
 .ipynb_checkpoints
 .env
 requirements.txt
-responses.py
