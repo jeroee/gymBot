@@ -13,7 +13,6 @@ import re
 import os
 from dotenv import load_dotenv
 from datetime import date, timedelta, datetime
-from main import exercise_selection, time_selection
 from bson.objectid import ObjectId
 
 # -------------------------------------------------------------------
@@ -106,8 +105,8 @@ def getDays(cutOffTime):
 
     weekdays = ["()", "(Monday)", "(Tuesday)", "(Wednesday)",
                 "(Thursday)", "(Friday)", "(Saturday)", "(Sunday)"]
-    print(weekdays[day_0.isoweekday()],
-          weekdays[day_1.isoweekday()], weekdays[day_2.isoweekday()])
+    # print(weekdays[day_0.isoweekday()],
+    #       weekdays[day_1.isoweekday()], weekdays[day_2.isoweekday()])
 
     if int(currentHour) < cutOffTime:
         days = [day_0.strftime("%d %B %Y") + " " + weekdays[day_0.isoweekday()],
@@ -126,8 +125,7 @@ def has_numbers(inputString):
     return bool(re.search(r'\d', inputString))
 
 
-async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print('quick view mode')
+def views(update):
     group_id = update.message.chat.id
     currentDateAndTime = datetime.now()
     schedules = user_activity.find(
@@ -149,55 +147,33 @@ async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         schedule_display += f"This is the group's gym schedule for the next few days:\n\n"
         for k, v in timetable.items():
-            schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n'
+            # date and day
+            schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n\n'
             for i, j in v.items():
+                # time
                 schedule_display += f'{i} \n'
                 for entry in j:
+                    # name and workout
                     schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
-                schedule_display += '\n'
+                schedule_display += "\n"
+            schedule_display += "\n"
     elif schedules is None:
         schedule_display += f'Nothing is scheduled in the next few days... 🙁'
+    return schedule_display
 
+
+async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print('quick view mode')
+    schedule_display = views(update)
     message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat"
-
     await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML)
     return ConversationHandler.END
 
 
 async def start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('start menu mode')
-    group_id = update.message.chat.id
-    currentDateAndTime = datetime.now()
-    schedules = user_activity.find(
-        {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id}).sort('date_time')
-    timetable = {}
-    schedule_display = ""
-    if schedules is not None:
-        for s in schedules:
-            if s['date'] not in timetable.keys():
-                timetable[s['date']] = {Hour24ToTime(
-                    s['time']): [{'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]}
-            elif s['date'] in timetable.keys():
-                if Hour24ToTime(s['time']) not in timetable[s['date']].keys():
-                    timetable[s['date']][Hour24ToTime(s['time'])] = [
-                        {'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]
-                elif Hour24ToTime(s['time']) in timetable[s['date']].keys():
-                    timetable[s['date']][Hour24ToTime(s['time'])].append(
-                        {'name': s['first_name'], 'day': s['day'], 'workout': s['workout']})
-
-        schedule_display += f"This is the group's gym schedule for the next few days:\n\n"
-        for k, v in timetable.items():
-            schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n'
-            for i, j in v.items():
-                schedule_display += f'{i} \n'
-                for entry in j:
-                    schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
-                schedule_display += '\n'
-    elif schedules is None:
-        schedule_display += f'Nothing is scheduled in the next few days... 🙁'
-
-    message = f"Hi welcome to gymBot. \n\n{schedule_display}"
-    # put in logic to display group's schedule
+    schedule_display = views(update)
+    message = f"Hi welcome to gymBot. \n\n{schedule_display} \n"
     keyboard0 = [
         [InlineKeyboardButton("Schedule a session",
                               callback_data="Schedule a session")],
@@ -278,9 +254,6 @@ async def period_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    morning = [700, 730, 800, 830, 900, 930, 1000, 1030, 1100, 1130]
-    afternoon = [1200, 1230, 1300, 1330, 1400, 1430, 1500, 1530, 1600, 1630]
-    evening = [1700, 1730, 1800, 1830, 1900, 1930, 2000, 2030, 2100, 2130]
 
     query = update.callback_query
     currentHourMin = getCurrentHourMin()
@@ -299,12 +272,20 @@ async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         period = time_period
         todo_exercises = []
 
+    morning = [700, 730, 800, 830, 900, 930, 1000, 1030, 1100, 1130]
+    afternoon = [1200, 1230, 1300, 1330, 1400, 1430, 1500, 1530, 1600, 1630]
+    evening = [1700, 1730, 1800, 1830, 1900, 1930, 2000, 2030, 2100, 2130]
+
     if period == 'Morning':
         # if selected today, remove anytime stamp that is earlier than current time.
+        print(period)
         if currentDay == DaySelected:
-            for time in morning:
-                if currentHourMin >= time:
-                    morning.remove(time)
+            print(f'currentHourMin: {currentHourMin}')
+            print(morning)
+            for t in morning:
+                print(f'times: {t}')
+                if currentHourMin >= t:
+                    morning.remove(t)
         times = morning
     elif period == 'Afternoon':
         if currentDay == DaySelected:
