@@ -223,7 +223,7 @@ def all_views(update):
 async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('quick view mode')
     schedule_display = all_views(update)
-    message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat"
+    message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat\n\nIf you need a prayer to keep you motivated at the gym, type '/quote' in the chat (Under Maintenance 🔧)"
     await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML)
     return ConversationHandler.END
 
