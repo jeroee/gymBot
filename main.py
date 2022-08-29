@@ -126,11 +126,11 @@ def all_views(update):
     else:
         group_id = update.callback_query.message.chat.id
     currentDateAndTime = datetime.now()
-    schedules = user_activity.find(
-        {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id}).sort('date_time')
+    schedules = [s for s in user_activity.find(
+        {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id}).sort('date_time')]
     timetable = {}
     schedule_display = ""
-    if schedules is not None:
+    if len(schedules) > 0:
         for s in schedules:
             if s['date'] not in timetable.keys():
                 timetable[s['date']] = {Hour24ToTime(
@@ -152,11 +152,11 @@ def all_views(update):
                 schedule_display += f'{i} \n'
                 for entry in j:
                     # name and workout
-                    schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
+                    schedule_display += f' 🏋️‍♀️{entry["name"]:<10}- {", ".join(entry["workout"])}\n'
                 schedule_display += "\n"
             schedule_display += "\n"
-    elif schedules is None:
-        schedule_display += f'Nothing is scheduled in the next few days... 🙁'
+    elif len(schedules) == 0:
+        schedule_display += f'Nothing is scheduled in the next few days... 🙁\nFeel free to schedule a session.\n'
     return schedule_display
 
 
@@ -345,18 +345,28 @@ async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for t in morning:
                 if t >= currentHourMin:
                     times.append(t)
+        else:
+            for t in morning:
+                times.append(t)
     elif period == 'Afternoon':
         if currentDay == DaySelected:
             for t in afternoon:
                 if t >= currentHourMin:
                     times.append(t)
+        else:
+            for t in afternoon:
+                times.append(t)
     elif period == 'Evening':
         if currentDay == DaySelected:
             for t in evening:
                 if t >= currentHourMin:
                     times.append(t)
+        else:
+            for t in evening:
+                times.append(t)
 
     keyboard3 = []
+    print(times)
     # morning timeslots
     if times[-1] == 1130:
         for time in times:
