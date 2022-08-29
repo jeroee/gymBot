@@ -42,7 +42,7 @@ q2 = "Which session are you planning to gym?"
 q3 = "What time are you planning to gym?"
 q4 = "What will you be training?"
 
-cutOffHour = 20
+cutOffHour = 21
 todo_exercises = []
 time_period = ''
 user_entry = {
@@ -56,8 +56,8 @@ user_entry = {
     "date_time": None,
     "workout": None
 }
-MENU, DAY_CHOICE, PERIOD_CHOICE, TIME_CHOICE, EXERCISE_CHOICE, CONFIRMATION = range(
-    6)
+MENU, MY_SESSIONS, DAY_CHOICE, PERIOD_CHOICE, TIME_CHOICE, EXERCISE_CHOICE, CONFIRMATION = range(
+    7)
 
 
 def getCurrentHourMin():
@@ -99,14 +99,9 @@ def getDays(cutOffTime):
     day_1 = date.today() + timedelta(days=1)
     day_2 = date.today() + timedelta(days=2)
     day_3 = date.today() + timedelta(days=3)
-    # print(currentHour)
-    # print(cutOffTime)
-    # print(day_0.isoweekday(), day_1.isoweekday(), day_2.isoweekday())
 
     weekdays = ["()", "(Monday)", "(Tuesday)", "(Wednesday)",
                 "(Thursday)", "(Friday)", "(Saturday)", "(Sunday)"]
-    # print(weekdays[day_0.isoweekday()],
-    #       weekdays[day_1.isoweekday()], weekdays[day_2.isoweekday()])
 
     if int(currentHour) < cutOffTime:
         days = [day_0.strftime("%d %B %Y") + " " + weekdays[day_0.isoweekday()],
@@ -125,8 +120,11 @@ def has_numbers(inputString):
     return bool(re.search(r'\d', inputString))
 
 
-def views(update):
-    group_id = update.message.chat.id
+def all_views(update):
+    if update.callback_query is None:
+        group_id = update.message.chat.id
+    else:
+        group_id = update.callback_query.message.chat.id
     currentDateAndTime = datetime.now()
     schedules = user_activity.find(
         {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id}).sort('date_time')
@@ -162,9 +160,69 @@ def views(update):
     return schedule_display
 
 
+# def my_view(update):
+#     query = update.callback_query
+#     telegram_id = query['from'].id
+#     group_id = update.callback_query.message.chat.id
+#     currentDateAndTime = datetime.now()
+#     schedules = user_activity.find(
+#         {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id, 'telegram_id': telegram_id}).sort('date_time')
+#     timetable = {}
+#     keyboard1 = []
+#     schedule_display = ""
+#     if schedules is not None:
+#         for s in schedules:
+#             if s['date'] not in timetable.keys():
+#                 timetable[s['date']] = {Hour24ToTime(
+#                     s['time']): [{'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]}
+#                 keyboard1.append([InlineKeyboardButton(
+#                     f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
+#             elif s['date'] in timetable.keys():
+#                 if Hour24ToTime(s['time']) not in timetable[s['date']].keys():
+#                     timetable[s['date']][Hour24ToTime(s['time'])] = [
+#                         {'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]
+#                     keyboard1.append([InlineKeyboardButton(
+#                         f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
+#                 elif Hour24ToTime(s['time']) in timetable[s['date']].keys():
+#                     timetable[s['date']][Hour24ToTime(s['time'])].append(
+#                         {'_id': s['_id'], 'name': s['first_name'], 'day': s['day'], 'workout': s['workout']})
+#                     keyboard1.append([InlineKeyboardButton(
+#                         f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
+
+#         schedule_display += f"This is your upcoming schedule in the next few days:\n\n"
+#         for k, v in timetable.items():
+#             # date and day
+#             schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n\n'
+#             for i, j in v.items():
+#                 # time
+#                 schedule_display += f'{i} \n'
+#                 for entry in j:
+#                     # name and workout
+#                     schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
+#                 schedule_display += "\n"
+#             schedule_display += "\n"
+#     elif schedules is None:
+#         schedule_display += f'You have nothing scheduled in the next few days... 🙁'
+#     keyboard1.append([InlineKeyboardButton("Back", callback_data="Back")])
+#     return schedule_display, keyboard1
+
+
+# async def my_sessions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     schedule_display, keyboard1 = my_view(update)
+#     reply_markup = InlineKeyboardMarkup(keyboard1)
+
+#     if len(keyboard1) > 1:
+#         schedule_display += 'If you wish to delete an upcomming session, you may remove it by selecting the session below.'
+#     await query.edit_message_text(
+#         text=f'{schedule_display}', reply_markup=reply_markup, parse_mode=constants.ParseMode.HTML
+#     )
+#     return MY_SESSIONS
+
+
 async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('quick view mode')
-    schedule_display = views(update)
+    schedule_display = all_views(update)
     message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat"
     await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML)
     return ConversationHandler.END
@@ -172,18 +230,26 @@ async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('start menu mode')
-    schedule_display = views(update)
+    schedule_display = all_views(update)
     message = f"Hi welcome to gymBot. \n\n{schedule_display} \n"
     keyboard0 = [
         [InlineKeyboardButton("Schedule a session",
                               callback_data="Schedule a session")],
         [InlineKeyboardButton(
-            "Edit a session", callback_data="Edit a session")],
-        [InlineKeyboardButton("More Info", callback_data="More Info")],
+            "View my sessions - Under Maintenance 🔧", callback_data="View my sessions")],
+        [InlineKeyboardButton(
+            "More Info - Under Maintenance 🔧", callback_data="More Info")],
         [InlineKeyboardButton("Exit", callback_data="Exit")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard0)
-    await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML, reply_markup=reply_markup)
+    if update.callback_query is None:
+        await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML, reply_markup=reply_markup)
+    else:
+        query = update.callback_query
+        await query.answer()
+        await query.edit_message_text(
+            text=f'{message}', parse_mode=constants.ParseMode.HTML, reply_markup=reply_markup
+        )
     return MENU
 
 
@@ -197,10 +263,6 @@ async def day_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         [InlineKeyboardButton("Back", callback_data="Back")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard1)
-    # Send message with text and appended InlineKeyboard
-    # if query is None:
-    #     await update.message.reply_text(q1, reply_markup=reply_markup)
-    # elif query is not None:
     await query.edit_message_text(
         text=q1, reply_markup=reply_markup
     )
@@ -275,30 +337,25 @@ async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     morning = [700, 730, 800, 830, 900, 930, 1000, 1030, 1100, 1130]
     afternoon = [1200, 1230, 1300, 1330, 1400, 1430, 1500, 1530, 1600, 1630]
     evening = [1700, 1730, 1800, 1830, 1900, 1930, 2000, 2030, 2100, 2130]
+    times = []
 
     if period == 'Morning':
         # if selected today, remove anytime stamp that is earlier than current time.
-        print(period)
         if currentDay == DaySelected:
-            print(f'currentHourMin: {currentHourMin}')
-            print(morning)
             for t in morning:
-                print(f'times: {t}')
-                if currentHourMin >= t:
-                    morning.remove(t)
-        times = morning
+                if t >= currentHourMin:
+                    times.append(t)
     elif period == 'Afternoon':
         if currentDay == DaySelected:
-            for time in afternoon:
-                if currentHourMin >= time:
-                    afternoon.remove(time)
-        times = afternoon
+            for t in afternoon:
+                if t >= currentHourMin:
+                    times.append(t)
     elif period == 'Evening':
         if currentDay == DaySelected:
-            for time in evening:
-                if currentHourMin >= time:
-                    evening.remove(time)
-        times = evening
+            for t in evening:
+                if t >= currentHourMin:
+                    times.append(t)
+
     keyboard3 = []
     # morning timeslots
     if times[-1] == 1130:
@@ -449,16 +506,27 @@ def main() -> None:
                 CallbackQueryHandler(
                     day_selection, pattern="^Schedule a session$"
                 ),
+                # CallbackQueryHandler(
+                #     my_sessions, pattern="^View my sessions$"
+                # ),
                 CallbackQueryHandler(
                     end_conversation, pattern="^Exit$"
                 ),
             ],
+            # MY_SESSIONS: [
+            #     CallbackQueryHandler(
+            #         period_selection, pattern="[^Back$]"
+            #     ),
+            #     CallbackQueryHandler(
+            #         start_menu, pattern="^Back$"
+            #     ),
+            # ],
             DAY_CHOICE: [
                 CallbackQueryHandler(
                     period_selection, pattern="[^Back$]"
                 ),
                 CallbackQueryHandler(
-                    end_conversation, pattern="^Back$"
+                    start_menu, pattern="^Back$"
                 ),
             ],
             PERIOD_CHOICE: [
