@@ -56,8 +56,12 @@ user_entry = {
     "date_time": None,
     "workout": None
 }
-MENU, MY_SESSIONS, DAY_CHOICE, PERIOD_CHOICE, TIME_CHOICE, EXERCISE_CHOICE, CONFIRMATION = range(
-    7)
+session_remove = {
+    "id": None,
+    "name": None
+}
+MENU, MY_SESSIONS, REMOVAL, DAY_CHOICE, PERIOD_CHOICE, TIME_CHOICE, EXERCISE_CHOICE, CONFIRMATION = range(
+    8)
 
 
 def getCurrentHourMin():
@@ -160,64 +164,97 @@ def all_views(update):
     return schedule_display
 
 
-# def my_view(update):
-#     query = update.callback_query
-#     telegram_id = query['from'].id
-#     group_id = update.callback_query.message.chat.id
-#     currentDateAndTime = datetime.now()
-#     schedules = user_activity.find(
-#         {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id, 'telegram_id': telegram_id}).sort('date_time')
-#     timetable = {}
-#     keyboard1 = []
-#     schedule_display = ""
-#     if schedules is not None:
-#         for s in schedules:
-#             if s['date'] not in timetable.keys():
-#                 timetable[s['date']] = {Hour24ToTime(
-#                     s['time']): [{'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]}
-#                 keyboard1.append([InlineKeyboardButton(
-#                     f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
-#             elif s['date'] in timetable.keys():
-#                 if Hour24ToTime(s['time']) not in timetable[s['date']].keys():
-#                     timetable[s['date']][Hour24ToTime(s['time'])] = [
-#                         {'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]
-#                     keyboard1.append([InlineKeyboardButton(
-#                         f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
-#                 elif Hour24ToTime(s['time']) in timetable[s['date']].keys():
-#                     timetable[s['date']][Hour24ToTime(s['time'])].append(
-#                         {'_id': s['_id'], 'name': s['first_name'], 'day': s['day'], 'workout': s['workout']})
-#                     keyboard1.append([InlineKeyboardButton(
-#                         f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data="s['_id']")])
+def my_view(update):
+    query = update.callback_query
+    telegram_id = query['from'].id
+    group_id = update.callback_query.message.chat.id
+    currentDateAndTime = datetime.now()
+    schedules = user_activity.find(
+        {'date_time': {"$gte": currentDateAndTime}, 'group_id': group_id, 'telegram_id': telegram_id}).sort('date_time')
+    num_schedules = len(list(schedules.clone()))
+    timetable = {}
+    keyboard1 = []
+    schedule_display = ""
+    if num_schedules > 0:
+        for s in schedules:
+            if s['date'] not in timetable.keys():
+                timetable[s['date']] = {Hour24ToTime(
+                    s['time']): [{'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]}
+                keyboard1.append([InlineKeyboardButton(
+                    f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data=f"{s['_id']}")])
+            elif s['date'] in timetable.keys():
+                if Hour24ToTime(s['time']) not in timetable[s['date']].keys():
+                    timetable[s['date']][Hour24ToTime(s['time'])] = [
+                        {'_id': s['_id'], 'name': s['first_name'], 'day':s['day'], 'workout':s['workout']}]
+                    keyboard1.append([InlineKeyboardButton(
+                        f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data=f"{s['_id']}")])
+                elif Hour24ToTime(s['time']) in timetable[s['date']].keys():
+                    timetable[s['date']][Hour24ToTime(s['time'])].append(
+                        {'_id': s['_id'], 'name': s['first_name'], 'day': s['day'], 'workout': s['workout']})
+                    keyboard1.append([InlineKeyboardButton(
+                        f"{s['date']} ({s['day'][:3]}) {Hour24ToTime(s['time'])} - {', '.join(s['workout'])}", callback_data=f"{s['_id']}")])
 
-#         schedule_display += f"This is your upcoming schedule in the next few days:\n\n"
-#         for k, v in timetable.items():
-#             # date and day
-#             schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n\n'
-#             for i, j in v.items():
-#                 # time
-#                 schedule_display += f'{i} \n'
-#                 for entry in j:
-#                     # name and workout
-#                     schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
-#                 schedule_display += "\n"
-#             schedule_display += "\n"
-#     elif schedules is None:
-#         schedule_display += f'You have nothing scheduled in the next few days... 🙁'
-#     keyboard1.append([InlineKeyboardButton("Back", callback_data="Back")])
-#     return schedule_display, keyboard1
+        schedule_display += f"This is your upcoming schedule in the next few days:\n\n"
+        for k, v in timetable.items():
+            # date and day
+            schedule_display += f'<b>{k} ({list(v.values())[0][0]["day"]})</b> \n\n'
+            for i, j in v.items():
+                # time
+                schedule_display += f'{i} \n'
+                for entry in j:
+                    # name and workout
+                    schedule_display += f' 🏋️‍♀️{entry["name"]:<10} {", ".join(entry["workout"])}\n'
+                schedule_display += "\n"
+            schedule_display += "\n"
+    elif num_schedules == 0:
+        schedule_display += f'You have nothing scheduled in the next few days... 🙁'
+    keyboard1.append([InlineKeyboardButton("⏎", callback_data="Back")])
+    return schedule_display, keyboard1
 
 
-# async def my_sessions(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     query = update.callback_query
-#     schedule_display, keyboard1 = my_view(update)
-#     reply_markup = InlineKeyboardMarkup(keyboard1)
+async def my_sessions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    schedule_display, keyboard1 = my_view(update)
+    reply_markup = InlineKeyboardMarkup(keyboard1)
 
-#     if len(keyboard1) > 1:
-#         schedule_display += 'If you wish to delete an upcomming session, you may remove it by selecting the session below.'
-#     await query.edit_message_text(
-#         text=f'{schedule_display}', reply_markup=reply_markup, parse_mode=constants.ParseMode.HTML
-#     )
-#     return MY_SESSIONS
+    if len(keyboard1) > 1:
+        schedule_display += 'If you wish to delete an upcomming session, you may remove it by selecting the session below.'
+    await query.edit_message_text(
+        text=f'{schedule_display}', reply_markup=reply_markup, parse_mode=constants.ParseMode.HTML
+    )
+    return MY_SESSIONS
+
+
+async def session_removal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    id = query.data
+    session_remove['id'] = id
+
+    for b in query.message.reply_markup.inline_keyboard[0]:
+        if b.callback_data == query.data:
+            name = b.text
+            session_remove['name'] = name
+    # session_removal['name'] =
+    keyboard2 = [
+        [InlineKeyboardButton('Confirm', callback_data='Confirm')],
+        [InlineKeyboardButton('⏎', callback_data='Back')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard2)
+
+    await query.answer()
+    await query.edit_message_text(
+        text=f'You have choose to remove a session:\n\n 🏋️‍♀️ {session_remove["name"]}\n', reply_markup=reply_markup
+    )
+    return REMOVAL
+
+
+async def removal_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    id = session_remove['id']
+    user_activity.delete_one({'_id': ObjectId(id)})
+    text = "Session removed\n\nGoodbye!"
+    await query.edit_message_text(text=text)
+    return ConversationHandler.END
 
 
 async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -236,7 +273,7 @@ async def start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Schedule a session",
                               callback_data="Schedule a session")],
         [InlineKeyboardButton(
-            "View my sessions - Under Maintenance 🔧", callback_data="View my sessions")],
+            "View my sessions", callback_data="View my sessions")],
         [InlineKeyboardButton(
             "More Info - Under Maintenance 🔧", callback_data="More Info")],
         [InlineKeyboardButton("Exit", callback_data="Exit")]
@@ -260,7 +297,7 @@ async def day_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         [InlineKeyboardButton(day_1, callback_data=day_1)],
         [InlineKeyboardButton(day_2, callback_data=day_2)],
         [InlineKeyboardButton(day_3, callback_data=day_3)],
-        [InlineKeyboardButton("Back", callback_data="Back")]
+        [InlineKeyboardButton("⏎", callback_data="Back")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard1)
     await query.edit_message_text(
@@ -296,7 +333,7 @@ async def period_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton('Morning', callback_data='Morning')],
         [InlineKeyboardButton('Afternoon', callback_data='Afternoon')],
         [InlineKeyboardButton('Evening', callback_data='Evening')],
-        [InlineKeyboardButton("Back", callback_data="Back")]
+        [InlineKeyboardButton("⏎", callback_data="Back")]
     ]
     currentHourMin = getCurrentHourMin()
     currentDay = date.today()
@@ -366,7 +403,6 @@ async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 times.append(t)
 
     keyboard3 = []
-    print(times)
     # morning timeslots
     if times[-1] == 1130:
         for time in times:
@@ -390,8 +426,12 @@ async def time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard3_clone = keyboard3.copy()
     keyboard3 = []
     for item in keyboard3_clone:
-        keyboard3.append(
-            [InlineKeyboardButton(item[0], callback_data=item[0])])
+        if item[0] == "Back":
+            keyboard3.append(
+                [InlineKeyboardButton("⏎", callback_data=item[0])])
+        else:
+            keyboard3.append(
+                [InlineKeyboardButton(item[0], callback_data=item[0])])
     reply_markup = InlineKeyboardMarkup(keyboard3)
     await query.edit_message_text(
         text=f'You have selected to gym on {today}, {today_date}, {period.lower()} session. {q3}', reply_markup=reply_markup
@@ -437,8 +477,12 @@ async def exercise_selection(update: Update, context: ContextTypes.DEFAULT_TYPE)
     keyboard4_clone = keyboard4.copy()
     keyboard4 = []
     for item in keyboard4_clone:
-        keyboard4.append(
-            [InlineKeyboardButton(item[0], callback_data=item[0])])
+        if item[0] == "Back":
+            keyboard4.append(
+                [InlineKeyboardButton("⏎", callback_data=item[0])])
+        else:
+            keyboard4.append(
+                [InlineKeyboardButton(item[0], callback_data=item[0])])
     reply_markup = InlineKeyboardMarkup(keyboard4)
 
     await query.answer()
@@ -461,7 +505,7 @@ async def confirm_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard5 = [
         [InlineKeyboardButton('Confirm', callback_data='Confirm')],
-        [InlineKeyboardButton('Back', callback_data='Back')]
+        [InlineKeyboardButton('⏎', callback_data='Back')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard5)
 
@@ -489,7 +533,7 @@ async def end_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_entry['date_time'] = datetime_object
         print(user_entry)
         user_activity.insert_one(user_entry)
-        text = "Goodbye! See you at the gym!"
+        text = "Goodbye! \n\nSee you at the gym!"
     elif query.data == 'Exit':
         text = "Goodbye!"
     await query.edit_message_text(text=text)
@@ -516,21 +560,29 @@ def main() -> None:
                 CallbackQueryHandler(
                     day_selection, pattern="^Schedule a session$"
                 ),
-                # CallbackQueryHandler(
-                #     my_sessions, pattern="^View my sessions$"
-                # ),
+                CallbackQueryHandler(
+                    my_sessions, pattern="^View my sessions$"
+                ),
                 CallbackQueryHandler(
                     end_conversation, pattern="^Exit$"
                 ),
             ],
-            # MY_SESSIONS: [
-            #     CallbackQueryHandler(
-            #         period_selection, pattern="[^Back$]"
-            #     ),
-            #     CallbackQueryHandler(
-            #         start_menu, pattern="^Back$"
-            #     ),
-            # ],
+            MY_SESSIONS: [
+                CallbackQueryHandler(
+                    session_removal, pattern="[^Back$]"
+                ),
+                CallbackQueryHandler(
+                    start_menu, pattern="^Back$"
+                ),
+            ],
+            REMOVAL: [
+                CallbackQueryHandler(
+                    removal_confirm, pattern="^Confirm$"
+                ),
+                CallbackQueryHandler(
+                    my_sessions, pattern="^Back$"
+                )
+            ],
             DAY_CHOICE: [
                 CallbackQueryHandler(
                     period_selection, pattern="[^Back$]"
