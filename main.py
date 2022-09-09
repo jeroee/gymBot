@@ -11,6 +11,7 @@ from telegram.ext import (
 from pymongo import MongoClient
 import re
 import os
+import random
 from dotenv import load_dotenv
 from datetime import date, timedelta, datetime
 from bson.objectid import ObjectId
@@ -29,6 +30,7 @@ USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 COLLECTION_NAME = os.getenv('COLLECTION_NAME')
+QUOTE_FILE = 'quotes.txt'
 
 connection_string = f'mongodb+srv://{USERNAME}:{PASSWORD}@cluster0.avfgdjd.mongodb.net/?retryWrites=true&w=majority'
 client = MongoClient(connection_string)
@@ -122,6 +124,14 @@ def getDays(cutOffTime):
 
 def has_numbers(inputString):
     return bool(re.search(r'\d', inputString))
+
+
+def getRandomQuote(file):
+    with open(file) as f:
+        lines = f.readlines()
+    lines = [l.replace('\n', '') for l in lines]
+    random_idx = random.randint(0, len(lines)-1)
+    return lines[random_idx]
 
 
 def all_views(update):
@@ -260,7 +270,13 @@ async def removal_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('quick view mode')
     schedule_display = all_views(update)
-    message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat\n\nIf you need a prayer to keep you motivated at the gym, type '/quote' in the chat (Under Maintenance 🔧)"
+    message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat\n\n"
+    quote = getRandomQuote(QUOTE_FILE)
+    if quote[0] == '"':
+        message += f"Random motivational quote:\n\n ~ {quote} ~ \n"
+    else:
+        message += f'Random motivational quote:\n\n ~ "{quote}" ~ \n'
+
     await update.message.reply_text(message, parse_mode=constants.ParseMode.HTML)
     return ConversationHandler.END
 
