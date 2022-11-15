@@ -270,7 +270,7 @@ async def removal_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('quick view mode')
     schedule_display = all_views(update)
-    message = f"Hi welcome to gymBot QuickView. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat\n\n"
+    message = f"Hi welcome to gymBot View. \n\n{schedule_display}To create or manage your schedule, type '/gym' in the chat\n\n"
     quote = getRandomQuote(QUOTE_FILE)
     if quote[0] == '"':
         message += f"Random motivational quote:\n\n ~ {quote} ~ \n"
@@ -284,7 +284,7 @@ async def quick_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('start menu mode')
     schedule_display = all_views(update)
-    message = f"Hi welcome to gymBot. \n\n{schedule_display} \n"
+    message = f"Hi welcome to gymBot. How can I help you?"
     keyboard0 = [
         [InlineKeyboardButton("Schedule a session",
                               callback_data="Schedule a session")],
@@ -549,10 +549,11 @@ async def end_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_entry['date_time'] = datetime_object
         print(user_entry)
         user_activity.insert_one(user_entry)
-        text = "Goodbye! \n\nSee you at the gym!"
+        schedule_display = all_views(update)
+        text = f"{schedule_display}\nGoodbye! \n\nSee you at the gym!"
     elif query.data == 'Exit':
         text = "Goodbye!"
-    await query.edit_message_text(text=text)
+    await query.edit_message_text(text=text, parse_mode=constants.ParseMode.HTML)
     return ConversationHandler.END
 
 
