@@ -32,7 +32,7 @@ DB_NAME = os.getenv('DB_NAME')
 COLLECTION_NAME = os.getenv('COLLECTION_NAME')
 QUOTE_FILE = 'quotes.txt'
 
-connection_string = f'mongodb+srv://{USERNAME}:{PASSWORD}@cluster0.avfgdjd.mongodb.net/?retryWrites=true&w=majority'
+connection_string = f'mongodb+srv://{USERNAME}:{PASSWORD}@testcluster.cpfwr.mongodb.net/?retryWrites=true&w=majority&appName=testCluster'
 client = MongoClient(connection_string)
 db = client[DB_NAME]
 user_activity = db[COLLECTION_NAME]
