@@ -1,11 +1,5 @@
 # gymBot 
-
 Created in python, gymBot is a simple telegram bot which can sync gym schedules and workouts with friends within their telegram group chats.
 
 ## Demo
-
-https://user-images.githubusercontent.com/56480078/187236286-06473caa-8c13-4f2a-aee3-e7d2c027e8ab.mov
-
-## To Use
-Currently for internal use only, in the process of developing more features (as seen in the demo)
-
+![26CB7DC9-985B-48ED-B3A8-7EDA6789EDF3_4_5005_c](https://github.com/user-attachments/assets/e31a17a4-57a9-4509-a7b8-29759527f404)
