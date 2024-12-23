@@ -9,6 +9,7 @@ from telegram.ext import (
 from pymongo import MongoClient
 from functools import partial
 import logging
+import sys
 
 # bot functions
 from handlers import *
@@ -43,9 +44,14 @@ filterwarnings(action="ignore", message=r".*CallbackQueryHandler",
                category=PTBUserWarning)
 # -------------------------------------------------------------------
 
-# Set up logging
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.INFO)
+# Configure the logger
+logging.basicConfig(
+    level=logging.INFO,  # Adjust the level (DEBUG, INFO, WARNING, etc.) as needed
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # Send logs to stdout
+    ],
+)
 logger = logging.getLogger(__name__)
 
 connection_string = f'mongodb+srv://{USERNAME}:{PASSWORD}@testcluster.cpfwr.mongodb.net/?retryWrites=true&w=majority&appName=testCluster'
