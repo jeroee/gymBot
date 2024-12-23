@@ -7,7 +7,7 @@ gymBot is a Telegram bot designed to help friends within the same Telegram group
 - 👥 Group View: View the collective schedule of everyone in the group.
 
 # To use
-- Add gymBot into any of your telegram groups
+- Add @GymSession_bot into your telegram group
 - type /gym to schedule or edit a session
 - type /view to view sessions scheduled by everyone in the group
   
