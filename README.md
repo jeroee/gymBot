@@ -6,6 +6,11 @@ gymBot is a Telegram bot designed to help friends within the same Telegram group
 - 🏋️ Exercise Plans: Let others know what exercises you'll be doing.
 - 👥 Group View: View the collective schedule of everyone in the group.
 
+# To use
+- Add gymBot into any of your telegram groups
+- type /gym to schedule or edit a session
+- type /view to view sessions scheduled by everyone in the group
+  
 ## Demo
 https://github.com/user-attachments/assets/26b59bd4-036e-4128-959a-9796af622167
 
